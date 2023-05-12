@@ -2,13 +2,9 @@ const express = require("express");
 const router = express.Router();
 
 // Controllers
-const auth_controller = require("../controllers/authController");
 const user_controller = require("../controllers/userController");
 const post_controller = require("../controllers/postController");
 const comment_controller = require("../controllers/commentController");
-
-// signup & login
-// login!
 
 // USER ROUTES
 // Get all Users and their respective Posts and Comments
@@ -40,8 +36,6 @@ router.put("/users/:id/remove-friend/:targetUserId", user_controller.remove_frie
 
 // Delete a user
 router.delete("/users/:id", user_controller.delete_user);
-
-
 
 // POST ROUTES
 // Get all posts belonging to a specific user and their friends, aka their newsfeed

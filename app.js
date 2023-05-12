@@ -12,6 +12,8 @@ const RateLimit = require("express-rate-limit");
 const path = require('path');
 var cors = require('cors');
 
+const passport = require("./passport");
+
 // Models
 const User = require("./models/user");
 const Post = require("./models/post");
@@ -26,6 +28,7 @@ mongoose.connect(mongodb, {
 
 // Routes
 const apiRouter = require("./routes/api");
+const authRouter = require("./routes/auth");
 
 // Application
 const app = express();
@@ -46,8 +49,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-
 app.use("/api", apiRouter);
+app.use("/auth", authRouter);
 
 app.get("/", (req, res, next) => {
     res.redirect("/api");
