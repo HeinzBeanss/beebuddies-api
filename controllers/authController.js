@@ -9,6 +9,7 @@ const Post = require("../models/post");
 const Comment = require("../models/comment");
 
 exports.login = (req, res, next) => {
+    console.log("PASSPORT - LOCAL - LOGIN ROUTE")
     passport.authenticate("local", {session: false}, function(err, user, info) {
         if (err) {
             return next(err);
@@ -16,7 +17,10 @@ exports.login = (req, res, next) => {
         if (!user) {
             return res.status(401).json({ message: "Invalid email or password" });
         }
+        // Success through passport-local
         req.login(user, {session: false}, function(err) {
+            console.log("STAGE + 1 - req.login")
+            // console.log(user);
             if (err) {
                 return next(err);
             }

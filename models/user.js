@@ -1,6 +1,15 @@
 const mongoose = require("mongoose");
+const fs = require("fs");
+const path = require("path");
+
 const { Schema } = mongoose;
 const { DateTime } = require("luxon");
+
+// Get profile picture
+const getDefaultProfilePicture = () => {
+  const defaultPicturePath = path.join(__dirname, '../Assets/default_bee_profile.jpg');
+  return fs.readFileSync(defaultPicturePath);
+}
 
 const UserSchema = mongoose.Schema({
     // User Details
@@ -23,6 +32,14 @@ const UserSchema = mongoose.Schema({
     posts: [{ type: Schema.Types.ObjectId, ref: "Post"}],
     liked_posts: [{ type: Schema.Types.ObjectId, ref: "Post"}],
     liked_comments: [{type: Schema.Types.ObjectId, ref: "Comment"}],
+});
+
+UserSchema.pre('save', async function(next) {
+  if (!this.profile_picture.data) {
+    const defaultPicturePath = path.join(__dirname, '../Assets/default_bee_profile.jpg');
+    this.profile_picture.data = await fs.promises.readFile(defaultPicturePath);
+  }
+  next();
 });
 
 // Virtuals
@@ -48,4 +65,6 @@ UserSchema.virtual("date_created_formatted").get(function () {
 
 // Export
 module.exports = mongoose.model("User", UserSchema);
+
+//       default: getDefaultProfilePicture,
 

@@ -1,6 +1,11 @@
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const FacebookStrategy = require("passport-facebook").Strategy;
+const bcrypt = require("bcryptjs");
+const passportJWT = require("passport-jwt");
+const JWTStrategy = passportJWT.Strategy;
+const ExtractJWT = passportJWT.ExtractJwt;
+
 
 const User = require("./models/user");
 
@@ -12,24 +17,28 @@ passport.use(
         passwordField: 'password',
       },
       (email, password, done) => {
-        try {
             console.log("ALERT: PASSPORT LOCAL CALLED");
-            User.findOne({ email }, function(err, user) {
-                if (err) { return done(err); }
-                if (!user) {
-                  return done(null, false, { message: 'Incorrect email.' });
+            User.findOne({ email })
+              .then((user) => {
+              if (!user) {
+                return done(null, false, { message: "Incorrect email or password" });
+              }
+    
+              // Match password
+              bcrypt.compare(password, user.password, (err, isMatch) => {
+                if (err) throw err;
+    
+                if (isMatch) {
+                  console.log("ALERT: PASSWORDS MATCH, MOVING ON");
+                  return done(null, user);
+                } else {
+                  return done(null, false, { message: "Incorrect email or password" });
                 }
-                if (!user.validPassword(password)) {
-                  return done(null, false, { message: 'Incorrect password.' });
-                }
-                return done(null, user);
               });
-        } catch(err) {
-            return done(err);
-        };
-
-      }
-    )
+            })
+            .catch((err) => console.log(err));
+            
+          })
 );
 
 // Functions 2 and 3, 
@@ -62,5 +71,22 @@ passport.use(
     }
   )
 );
+
+// Jwt Strategy
+passport.use(new JWTStrategy({
+  jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
+  secretOrKey : process.env.secretjwt
+},
+function (jwtPayload, cb) {
+  console.log("JWT STRAT");
+  return UserModel.findOneById(jwtPayload.id)
+      .then(user => {
+          return cb(null, user);
+      })
+      .catch(err => {
+          return cb(err);
+      });
+}
+));
 
 module.exports = passport;
