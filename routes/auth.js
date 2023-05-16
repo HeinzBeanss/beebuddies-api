@@ -12,5 +12,11 @@ router.post("/login", auth_controller.login);
 router.get("/login-facebook", auth_controller.login_facebook);
 router.get("/login-facebook/callback", auth_controller.login_facebook_callback);
 
+// Sign out
+router.get("/logout", auth_controller.logout);
+
+// Verify Token
+router.get("/verify-token", auth_controller.verify_token);
+
 // Export
 module.exports = router;

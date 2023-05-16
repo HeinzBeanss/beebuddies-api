@@ -37,10 +37,26 @@ const UserSchema = mongoose.Schema({
 UserSchema.pre('save', async function(next) {
   if (!this.profile_picture.data) {
     const defaultPicturePath = path.join(__dirname, '../Assets/default_bee_profile.jpg');
-    this.profile_picture.data = await fs.promises.readFile(defaultPicturePath);
+    const defaultPictureData = await fs.promises.readFile(defaultPicturePath);
+    this.profile_picture.data = Buffer.from(defaultPictureData);
+    this.profile_picture.contentType = "image/jpeg";
   }
   next();
 });
+
+UserSchema.virtual('profile_picture_url').get(function () {
+  if (this.profile_picture && this.profile_picture.data) {
+    const base64Image = this.profile_picture.data.toString('base64');
+    return `data:${this.profile_picture.contentType};base64,${base64Image}`;
+  }
+  return null; // or a default image URL
+});
+
+  // TO USE IF I HAVE ISSUES WITH IMAGES WHEN UPDATING USER.PROFILE
+  // else if (this.isModified('profile_picture.data')) {
+  //   const base64Data = this.profile_picture.data.toString('base64');
+  //   this.profile_picture.data = base64Data;
+  // }
 
 // Virtuals
 // User URL
