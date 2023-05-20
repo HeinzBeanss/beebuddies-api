@@ -56,7 +56,8 @@ exports.verify_token = async (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.secretjwt);
-        const user = await User.findById(decoded.userId);
+        const user = await User.findById(decoded.userId)
+        .select("first_name last_name _id profile_picture");
         if (!user) {
             return res.status(404).json({ message:"User not found" });
         }

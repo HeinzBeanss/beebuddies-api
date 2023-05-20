@@ -9,6 +9,7 @@ const PostSchema = mongoose.Schema({
         contentType: { type: String },
       },
     content: { type: String, required: true, },
+    author: { type: Schema.Types.ObjectId, ref: "User" },
     timestamp: { type: Date, default: Date.now },
 
     // Post Extras

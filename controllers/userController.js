@@ -1,7 +1,7 @@
 const { body, validationResult } = require("express-validator");
 const async = require("async");
 const bcrypt = require("bcryptjs");
-
+const { DateTime } = require('luxon');
 
 // Models
 const User = require("../models/user");
@@ -18,7 +18,7 @@ exports.get_user = (req, res, next) => {
     res.json({ message: "user detail"});
 };
 
-// Create new user
+// Create new user - COMPLETE
 exports.post_user = [
     body("first_name", "You must enter your first name").trim().notEmpty().escape(),
     body("last_name", "You must enter your last name").trim().notEmpty().escape(),
@@ -32,8 +32,15 @@ exports.post_user = [
         }
         return true;
     }),
+    body("birthdate", "You must enter your birthdate").notEmpty(),
+    body("birthdate", "Invalid date of birth")
+    .isISO8601()
+    .toDate(),
     async (req, res, next) =>  {
-        console.log(req.body);
+        console.log(req.body.birthdate);
+        if (req.body.birthdate instanceof Date) {
+            console.log('birthdate is a Date object');
+        }
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({errors: errors.array()});
@@ -52,7 +59,8 @@ exports.post_user = [
                     last_name: req.body.last_name,
                     email: req.body.email,
                     password: hashedPassword,
-                    
+                    birthdate: req.body.birthdate,
+
                     // User Friends
                     friends: [],
                     friend_requests_in: [],
@@ -80,6 +88,36 @@ exports.edit_user = [
         res.json({ message: "edit user"});
     }
 ];
+
+// Get a list of friends - COMPLETE
+exports.get_friends = async (req, res,  next) => {
+    try {
+        const user = await User.findById(req.params.id)
+        .select("friends")
+        .populate("friends");
+        if (!user) {
+            return res.status(404).json({ error: "No user found"})
+        } 
+        res.json(user.friends);
+    } catch (err) {
+        res.status(500).json({ error: "An error has occured" });
+    }
+}
+
+// Get a list of friend requests  - COMPLETE
+exports.get_friend_requests = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.params.id)
+        .select("friend_requests_in");
+
+        if (!user) {
+            return res.status(404).json({ error: "No user found"});
+        }
+        res.json(user.friend_requests_in);
+    } catch (err) {
+        res.status(500).json({ error: "An error occured" });
+    }
+}
 
 // Send a friend request
 exports.send_friend_request = (req, res, next) => {

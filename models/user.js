@@ -17,7 +17,15 @@ const UserSchema = mongoose.Schema({
     password: { type: String, required: true },
     first_name: { type: String, required: true },
     last_name: { type: String, required: true },
+    bio: { type: String, required: true, default: function() {
+      return `We don't know much about ${this.first_name}. but we're sure they're buzzing.`;
+    }},
+    birthdate: { type: Date, required: true },
     profile_picture: {
+      data: { type: Buffer, },
+      contentType: { type: String },
+    },
+    banner: {
       data: { type: Buffer, },
       contentType: { type: String },
     },
@@ -40,6 +48,12 @@ UserSchema.pre('save', async function(next) {
     const defaultPictureData = await fs.promises.readFile(defaultPicturePath);
     this.profile_picture.data = Buffer.from(defaultPictureData);
     this.profile_picture.contentType = "image/jpeg";
+  }
+  if (!this.banner.data) {
+    const defaultBannerPath = path.join(__dirname, '../Assets/default-banner.jpg');
+    const defaultBannerData = await fs.promises.readFile(defaultBannerPath);
+    this.banner.data = Buffer.from(defaultBannerData);
+    this.banner.contentType = "image/jpeg";
   }
   next();
 });

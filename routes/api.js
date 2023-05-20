@@ -19,6 +19,12 @@ router.post("/users", user_controller.post_user);
 // Edit a user profile
 router.put("/users/:id", user_controller.edit_user);
 
+// Get a list of friends
+router.get("/users/:id/friends", user_controller.get_friends);
+
+// Get a list of friend requests
+router.get("/users/:id/friend-requests", user_controller.get_friend_requests);
+
 // Send a friend request
 router.put("/users/:id/send-friend-request/:targetUserId", user_controller.send_friend_request);
 
@@ -37,7 +43,12 @@ router.put("/users/:id/remove-friend/:targetUserId", user_controller.remove_frie
 // Delete a user
 router.delete("/users/:id", user_controller.delete_user);
 
+
+
+
+
 // POST ROUTES
+
 // Get all posts belonging to a specific user and their friends, aka their newsfeed
 router.get("/users/:id/friends/posts", post_controller.get_user_and_friend_posts);
 
