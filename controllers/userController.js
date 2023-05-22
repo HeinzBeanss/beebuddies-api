@@ -8,9 +8,24 @@ const User = require("../models/user");
 const Post = require("../models/post");
 const Comment = require("../models/comment");
 
-// Get all Users and their respective Posts and Comments
-exports.get_user_list = (req, res, next) => {
-    res.json({ message: "user list"});
+// Get all Users that aren't friends with he current user
+exports.get_user_list_not_friends = async (req, res, next) => {
+    try {
+        const currentUser = await User.findById(req.params.id)
+        .populate("friends");
+        const friendList = currentUser.friends.map(friend => friend._id);
+
+        const users = await User.find({
+            $and: [
+                { _id: { $nin: [req.params.id, ...friendList] } },
+            ]
+        })
+        .select("first_name last_name profile_picture _id")
+        .lean();
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: 'An error occurred' });
+    }
 };
 
 // Get specific User

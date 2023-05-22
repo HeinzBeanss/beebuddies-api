@@ -25,7 +25,7 @@ exports.login = (req, res, next) => {
             }
             const token = jwt.sign({userId: user._id},  process.env.secretjwt, { expiresIn: "1h" });
             const updatedUser = user.toObject();
-            return res.status(200).json({user, token});
+            return res.status(200).json({updatedUser, token});
         });
     })(req, res, next);
 };
@@ -44,8 +44,12 @@ exports.login_facebook_callback = (req, res, next) => {
 
 exports.logout = (req, res, next) => {
     console.log("LOGGING USER OUT");
-    req.logout();
-    return res.status(200).json({message: "User has been logged out"});
+    try {
+        req.logout();
+        return res.status(200).json({message: "User has been logged out"});
+    } catch (err) {
+        return res.status(400).json({message: "User not signed in."});
+    }
 };
 
 exports.verify_token = async (req, res, next) => {

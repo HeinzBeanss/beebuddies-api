@@ -7,8 +7,8 @@ const post_controller = require("../controllers/postController");
 const comment_controller = require("../controllers/commentController");
 
 // USER ROUTES
-// Get all Users and their respective Posts and Comments
-router.get("/users", user_controller.get_user_list);
+// Get all Users that aren't friends with he current user
+router.get("/user/:id/unadded-users", user_controller.get_user_list_not_friends);
 
 // Get specific User
 router.get("/users/:id", user_controller.get_user);
