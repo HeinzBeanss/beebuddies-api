@@ -8,7 +8,7 @@ const User = require("../models/user");
 const Post = require("../models/post");
 const Comment = require("../models/comment");
 
-// Get all Users that aren't friends with he current user
+// Get all Users that aren't friends with he current user - COMPLETE
 exports.get_user_list_not_friends = async (req, res, next) => {
     try {
         const currentUser = await User.findById(req.params.id)
@@ -20,7 +20,7 @@ exports.get_user_list_not_friends = async (req, res, next) => {
                 { _id: { $nin: [req.params.id, ...friendList] } },
             ]
         })
-        .select("first_name last_name profile_picture _id")
+        .select("first_name last_name profile_picture friends friend_requests_in friend_requests_out _id")
         .lean();
         res.json(users);
     } catch (err) {
@@ -29,8 +29,15 @@ exports.get_user_list_not_friends = async (req, res, next) => {
 };
 
 // Get specific User
-exports.get_user = (req, res, next) => {
-    res.json({ message: "user detail"});
+exports.get_user = async (req, res, next) => {
+    try {   
+        const user = await User.findById(req.params.id)
+        .lean();
+        // Note - Maybe populate fields.
+        res.json(user)
+    } catch (err) {
+        res.status(500).json({ error: "An error has occured" });
+    }
 };
 
 // Create new user - COMPLETE
@@ -109,7 +116,9 @@ exports.get_friends = async (req, res,  next) => {
     try {
         const user = await User.findById(req.params.id)
         .select("friends")
-        .populate("friends");
+        .populate("friends")
+        .lean();
+
         if (!user) {
             return res.status(404).json({ error: "No user found"})
         } 
@@ -123,7 +132,12 @@ exports.get_friends = async (req, res,  next) => {
 exports.get_friend_requests = async (req, res, next) => {
     try {
         const user = await User.findById(req.params.id)
-        .select("friend_requests_in");
+        .select("friend_requests_in")
+        .populate({
+            path: "friend_requests_in",
+            select: "first_name last_name profile_picture"
+        })
+        .lean();
 
         if (!user) {
             return res.status(404).json({ error: "No user found"});
@@ -134,24 +148,90 @@ exports.get_friend_requests = async (req, res, next) => {
     }
 }
 
-// Send a friend request
-exports.send_friend_request = (req, res, next) => {
-    res.json({ message: "send friend request"});
+// Send a friend request - COMPLETE
+exports.send_friend_request = async (req, res, next) => {
+    try {
+        const currentUser = await User.findById(req.params.id);
+        const targetUser = await User.findById(req.params.targetUserId);
+    
+        const isFriend = currentUser.friends.includes(req.params.targetUserId);
+        const isRequestSent = currentUser.friend_requests_out.includes(req.params.targetUserId);
+    
+        if (isFriend || isRequestSent) {
+            return res.status(400).json({ error: "Friend request already sent or user is already a friend" });
+        }
+        
+        currentUser.friend_requests_out.push(req.params.targetUserId);
+        targetUser.friend_requests_in.push(req.params.id);
+    
+        await Promise.all([ currentUser.save(), targetUser.save()]);
+
+        res.json({ message: `Sucessfully ${currentUser.first_name} added ${targetUser.first_name}` });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ error: "An error occurred while sending the friend request" });
+    }
 };
 
-// Accept a friend request
-exports.add_friend = (req, res, next) => {
-    res.json({ message: "accept friend request"});
+// Accept a friend request - COMPLETE
+exports.add_friend = async (req, res, next) => {
+    try {
+        const currentUser = await User.findById(req.params.id)
+        .populate("friend_requests_in friends");
+        const targetUser = await User.findById(req.params.targetUserId)
+        .populate("friend_requests_out friends");
+
+        currentUser.friend_requests_in.pull(targetUser._id);
+        targetUser.friend_requests_out.pull(currentUser._id);
+        currentUser.friends.push(targetUser._id);
+        targetUser.friends.push(currentUser._id);
+
+        await Promise.all([ currentUser.save(), targetUser.save()]);
+
+        res.json({ message: ` ${currentUser.first_name} accepted ${targetUser.first_name}'s friend request` });
+
+    } catch (err) {
+        res.status(500).json({ error: "An error has occured" });
+    }
 };
 
-// Resind a friend reqest
-exports.resind_friend_request = (req, res, next) => {
-    res.json({ message: "resind friend request"}); 
+// Resind a friend reqest - COMPLETE
+exports.resind_friend_request = async (req, res, next) => {
+    try {
+        const currentUser = await User.findById(req.params.id)
+        .populate("friend_requests_out");
+        const targetUser = await User.findById(req.params.targetUserId)
+        .populate("friend_requests_in");
+
+        currentUser.friend_requests_out.pull(targetUser._id);
+        targetUser.friend_requests_in.pull(currentUser._id);
+
+        await Promise.all([ currentUser.save(), targetUser.save()]);
+
+        res.json({ message: ` ${currentUser.first_name} rescinded ${targetUser.first_name}'s friend request` });
+
+    } catch (err) {
+        res.status(500).json({ error: "An error has occured while attempting to rescind the friend request" });
+    }
 };
 
-// Deny a friend request
-exports.deny_friend_request = (req, res, next) => {
-    res.json({ message: "deny friend request"});
+// Deny a friend request - COMPLETE
+exports.deny_friend_request = async (req, res, next) => {
+    try {
+        const currentUser = await User.findById(req.params.id)
+        .populate("friend_requests_in");
+        const targetUser = await User.findById(req.params.targetUserId)
+        .populate("friend_requests_out");
+
+        currentUser.friend_requests_in.pull(targetUser._id);
+        targetUser.friend_requests_out.pull(currentUser._id);
+
+        await Promise.all([ currentUser.save(), targetUser.save()]);
+
+        res.json({ message: ` ${currentUser.first_name} denied ${targetUser.first_name}'s friend request` });
+    } catch (err) {
+        res.status(500).json({ error: "An error occurred while denying the friend request" });
+    }
 };
 
 // Remove a friend
@@ -163,9 +243,5 @@ exports.remove_friend = (req, res, next) => {
 exports.delete_user = (req, res, next) => {
     res.json({ message: "delete user"});
 };
-
-
-    
-
 
 

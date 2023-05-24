@@ -32,7 +32,7 @@ router.put("/users/:id/send-friend-request/:targetUserId", user_controller.send_
 router.put("/users/:id/add-friend/:targetUserId", user_controller.add_friend);
 
 // Resind a friend request
-router.put("/users/:id/resind-friend-request/:targetUserId", user_controller.resind_friend_request);
+router.put("/users/:id/rescind-friend-request/:targetUserId", user_controller.resind_friend_request);
 
 // Deny a friend request
 router.put("/users/:id/deny-friend-request/:targetUserId", user_controller.deny_friend_request);
