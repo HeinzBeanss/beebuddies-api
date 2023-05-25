@@ -9,7 +9,7 @@ const CommentSchema = mongoose.Schema({
     timestamp: { type: Date, default: Date.now },
 
     // Comment Extras
-    likes: { type: Schema.Types.ObjectId, ref: "User"},
+    likes: [{ type: Schema.Types.ObjectId, ref: "User"}],
 })
 
 // Virtuals

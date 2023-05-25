@@ -34,7 +34,15 @@ exports.get_user_and_friend_posts = async (req, res, next) => {
         }
         const friends = [req.params.id, ...user.friends.map(friend => friend._id)];
         const allPosts = await Post.find({ author: { $in: friends } }).sort({ timestamp: -1 })
+        .limit(10)
+        .populate({
+            path: 'comments',
+            populate: {
+              path: 'author',
+            },
+          })
         .populate("author")
+        .populate("likes")
         .lean();
         
         res.json(allPosts);
@@ -48,7 +56,7 @@ exports.get_user_posts = (req, res, next) => {
     res.json({message: "get user posts"});
 };
 
-// Create a post
+// Create a post - COMPLETE
 exports.post_post = [
 (req, res, next) => {
     upload.single('image')(req, res, function (err) {
@@ -122,12 +130,26 @@ exports.delete_post = (req, res, next) => {
     res.json({message: "delete a post"});
 };
 
-// Like a post
-exports.like_post = (req, res, next) => {
-    res.json({message: "like a post"});
+// Like a post - COMPLETE
+exports.like_post = async (req, res, next) => {
+    try {
+        const post = await Post.findById(req.params.postId);
+
+        if (!post) {
+            return res.status(404).json({ error: 'Post not found' });
+        }
+
+        if (post.likes.includes(req.params.id)) {
+            post.likes.pull(req.params.id);
+            await post.save();
+            res.json({message: `${req.params.id} successfully unliked post ${req.params.postId}`});
+        } else {
+            post.likes.push(req.params.id);
+            await post.save();
+            res.json({message: `${req.params.id} successfully liked post ${req.params.postId}`});
+        }
+    } catch (err) {
+        res.status(500).json({ error: "There was an error liking the post"});
+    }
 };
 
-// Unlike a post
-exports.unlike_post = (req, res, next) => {
-    res.json({message: "unlike a post"});
-};

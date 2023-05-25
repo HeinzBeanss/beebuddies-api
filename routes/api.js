@@ -62,25 +62,19 @@ router.post("/users/:id/posts", post_controller.post_post);
 router.delete("/users/:id/posts/:postId", post_controller.delete_post);
 
 // Like a post
-router.put("/users/:id/posts/:postId/like", post_controller.like_post);
-
-// Unlike a post
-router.put("/users/:id/posts/:postId/unlike", post_controller.unlike_post);
+router.put("/users/:id/posts/:postId/toggle-like", post_controller.like_post);
 
 
 
 // COMMENT ROUTES
 // Create a comment
-router.post("/comments", comment_controller.post_comment);
+router.post("/users/:id/posts/:postId/comment", comment_controller.post_comment);
 
 // Delete a comment
-router.delete("/comments/:commentId", comment_controller.delete_comment);
+router.delete("/users/:id/posts/:postId/comments/:commentId", comment_controller.delete_comment);
 
 // Like a comment
-router.put("/comments/:commentId/like", comment_controller.like_comment);
-
-// Unlike a comment
-router.put("/comments/:commentId/unlike", comment_controller.unlike_comment);
+router.put("/users/:id/posts/:postId/comments/:commentId/toggle-like", comment_controller.like_comment);
 
 // Export
 module.exports = router;
