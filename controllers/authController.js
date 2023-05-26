@@ -44,6 +44,8 @@ exports.login_facebook_callback = (req, res, next) => {
 
 exports.logout = (req, res, next) => {
     console.log("LOGGING USER OUT");
+    console.log(req.updatedUser);
+    // NOTE - fix auth to signout properly
     try {
         req.logout();
         return res.status(200).json({message: "User has been logged out"});

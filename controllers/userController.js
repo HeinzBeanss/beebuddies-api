@@ -32,7 +32,33 @@ exports.get_user_list_not_friends = async (req, res, next) => {
 exports.get_user = async (req, res, next) => {
     try {   
         const user = await User.findById(req.params.id)
+        .select("first_name last_name bio birthdate profile_picture banner friends posts")
+        .populate("friends")
+        .populate({
+          path: "posts",
+          options: {
+            limit: 15,
+            sort: { timestamp: -1 }, // Sort by timestamp in descending order
+          },
+          populate: [
+            {
+              path: "author",
+              model: "User",
+              select: "first_name last_name profile_picture", // Select the desired fields from the author
+            },
+            {
+              path: "comments",
+              model: "Comment",
+              populate: {
+                path: "author",
+                model: "User",
+                select: "first_name last_name profile_picture", // Select the desired fields from the author of the comment
+              },
+            },
+          ],
+        })
         .lean();
+      
         // Note - Maybe populate fields.
         res.json(user)
     } catch (err) {
