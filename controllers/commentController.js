@@ -8,7 +8,7 @@ const Comment = require("../models/comment");
 
 // Create a comment
 exports.post_comment = [
-    body("comment", "Must be at least one digit long").trim().isLength({min: 1}).escape(),
+    body("comment", "Must be at least one digit long").trim().isLength({min: 1}),
     async (req, res, next) =>  {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {

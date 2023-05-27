@@ -72,8 +72,8 @@ exports.post_post = [
       next();
     });
   },
-body("content", "Post has no content").trim().isLength({min: 1}).escape(),
-body("author", "Post has no author").trim().isLength({min: 1}).escape(),
+body("content", "Post has no content").trim().isLength({min: 1}),
+body("author", "Post has no author").trim().isLength({min: 1}),
 async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

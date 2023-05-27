@@ -68,10 +68,10 @@ exports.get_user = async (req, res, next) => {
 
 // Create new user - COMPLETE
 exports.post_user = [
-    body("first_name", "You must enter your first name").trim().notEmpty().escape(),
-    body("last_name", "You must enter your last name").trim().notEmpty().escape(),
-    body("email", "Invalid email address").trim().notEmpty().isEmail().escape(),
-    body("password", "Must be 6 at least characters").trim().isLength({min: 6}).escape(),
+    body("first_name", "You must enter your first name").trim().notEmpty(),
+    body("last_name", "You must enter your last name").trim().notEmpty(),
+    body("email", "Invalid email address").trim().notEmpty().isEmail(),
+    body("password", "Must be 6 at least characters").trim().isLength({min: 6}),
     body("passwordtwo").custom((value, {req}) => {
         if (value !== req.body.password) {
             console.log(value);
@@ -161,7 +161,7 @@ exports.get_friend_requests = async (req, res, next) => {
         .select("friend_requests_in")
         .populate({
             path: "friend_requests_in",
-            select: "first_name last_name profile_picture"
+            select: "first_name last_name profile_picture friends"
         })
         .lean();
 
