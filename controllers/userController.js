@@ -2,6 +2,22 @@ const { body, validationResult } = require("express-validator");
 const async = require("async");
 const bcrypt = require("bcryptjs");
 const { DateTime } = require('luxon');
+const multer = require("multer");
+const upload = multer({
+    limits: {
+      fileSize: 4 * 1024 * 1024, // 1MB in bytes
+    },
+    fileFilter: function (req, file, cb) {
+        // Check the file type
+        if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/gif' || file.mimetype === 'image/tiff' || file.mimetype === 'image/webp' ) {
+          // Accept the file
+          cb(null, true);
+        } else {
+          // Reject the file
+          cb(new Error('Invalid file type.'));
+        }
+      },
+  });
 
 // Models
 const User = require("../models/user");
@@ -32,7 +48,7 @@ exports.get_user_list_not_friends = async (req, res, next) => {
 exports.get_user = async (req, res, next) => {
     try {   
         const user = await User.findById(req.params.id)
-        .select("first_name last_name bio birthdate profile_picture banner friends posts")
+        .select("first_name last_name bio birthdate profile_picture banner friends posts date_created")
         .populate("friends")
         .populate({
           path: "posts",
@@ -134,6 +150,41 @@ exports.post_user = [
 exports.edit_user = [
     (req, res, next) => {
         res.json({ message: "edit user"});
+    }
+];
+
+// Edit a user banner 
+exports.edit_user_banner = [
+    (req, res, next) => {
+        upload.single('image')(req, res, function (err) {
+          if (err instanceof multer.MulterError) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+              return res.status(400).json({ error: 'File size exceeds the limit of 4MB.' });
+            }
+            return res.status(500).json({ error: 'File upload error.' });
+          } else if (err) {
+            return res.status(500).json({ error: 'File upload error.' });
+          }
+          next();
+        });
+      },
+    async (req, res, next) => {
+        if (!req.file) {
+             return res.status(500).json({ message: "No banner upload found" });
+        } else {
+            try {
+                const user = await User.findById(req.params.id);
+                if (!user) {
+                    return res.status(404).json({ error: 'User not found' });
+                }
+                user.banner.data = req.file.buffer;
+                user.banner.contentType = req.file.mimetype;
+                await user.save();
+                res.json({ message: "Successfully updated user's banner" });
+            } catch (err) {
+                return res.status(500).json({ message: "There was an error upading the user's banner" });
+            }
+        }
     }
 ];
 

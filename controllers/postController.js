@@ -12,7 +12,7 @@ const upload = multer({
           cb(null, true);
         } else {
           // Reject the file
-          cb(new Error('Invalid file type. Only JPEG and PNG files are allowed.'));
+          cb(new Error('Invalid file type.'));
         }
       },
   });

@@ -19,6 +19,9 @@ router.post("/users", user_controller.post_user);
 // Edit a user profile
 router.put("/users/:id", user_controller.edit_user);
 
+// Edit a user banner
+router.put("/users/:id/update-banner", user_controller.edit_user_banner);
+
 // Get a list of friends
 router.get("/users/:id/friends", user_controller.get_friends);
 
