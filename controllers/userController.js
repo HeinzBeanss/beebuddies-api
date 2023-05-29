@@ -16,8 +16,24 @@ const upload = multer({
           // Reject the file
           cb(new Error('Invalid file type.'));
         }
-      },
-  });
+    },
+});
+
+const uploadpfp = multer({
+    limits: {
+      fileSize: 2 * 1024 * 1024, // 1MB in bytes
+    },
+    fileFilter: function (req, file, cb) {
+        // Check the file type
+        if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/gif' || file.mimetype === 'image/tiff' || file.mimetype === 'image/webp' ) {
+          // Accept the file
+          cb(null, true);
+        } else {
+          // Reject the file
+          cb(new Error('Invalid file type.'));
+        }
+    },
+});
 
 // Models
 const User = require("../models/user");
@@ -48,8 +64,11 @@ exports.get_user_list_not_friends = async (req, res, next) => {
 exports.get_user = async (req, res, next) => {
     try {   
         const user = await User.findById(req.params.id)
-        .select("first_name last_name bio birthdate profile_picture banner friends posts date_created")
-        .populate("friends")
+        .select("first_name last_name bio birthdate profile_picture banner friends posts date_created friend_requests_out friend_requests_in")
+        .populate({
+            path: "friends",
+            select: "first_name last_name profile_picture"
+        })
         .populate({
           path: "posts",
           options: {
@@ -148,8 +167,65 @@ exports.post_user = [
 
 // Edit a user profile
 exports.edit_user = [
+    body("first_name", "You must enter your first name").trim().notEmpty(),
+    body("last_name", "You must enter your last name").trim().notEmpty(),
+    body("bio", "You must enter your bio").trim().notEmpty(),
+    async (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({errors: errors.array()});
+        }
+
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            res.status(400).json({error: "No user found"});
+        }
+
+        try {
+            user.first_name = req.body.first_name;
+            user.last_name = req.body.last_name;
+            user.bio = req.body.bio;
+
+            await user.save();
+            res.json({message: `Successfully updated ${req.body.first_name}'s profile`});
+        } catch (err) {
+            res.status(500).json({ error: "There was an error updating user profile" });
+        }
+    }
+];
+
+// Edit a user avatar
+exports.edit_user_avatar = [
     (req, res, next) => {
-        res.json({ message: "edit user"});
+        uploadpfp.single('image')(req, res, function (err) {
+          if (err instanceof multer.MulterError) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+              return res.status(400).json({ error: 'File size exceeds the limit of 2MB.' });
+            }
+            return res.status(500).json({ error: 'File upload error.' });
+          } else if (err) {
+            return res.status(500).json({ error: 'File upload error.' });
+          }
+          next();
+        });
+      },
+    async (req, res, next) => {
+        if (!req.file) {
+             return res.status(500).json({ message: "No banner upload found" });
+        } else {
+            try {
+                const user = await User.findById(req.params.id);
+                if (!user) {
+                    return res.status(404).json({ error: 'User not found' });
+                }
+                user.profile_picture.data = req.file.buffer;
+                user.profile_picture.contentType = req.file.mimetype;
+                await user.save();
+                res.json({ message: "Successfully updated user's profile picture" });
+            } catch (err) {
+                return res.status(500).json({ message: "There was an error upading the user's banner" });
+            }
+        }
     }
 ];
 
@@ -312,8 +388,25 @@ exports.deny_friend_request = async (req, res, next) => {
 };
 
 // Remove a friend
-exports.remove_friend = (req, res, next) => {
-    res.json({ message: "remove friend"});
+exports.remove_friend = async (req, res, next) => {
+    try {
+        const currentUser = await User.findById(req.params.id).select("first_name friends");
+        const targetUser = await User.findById(req.params.targetUserId).select("first_name friends");
+
+        if (!currentUser || !targetUser) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        currentUser.friends.pull(targetUser._id);
+        targetUser.friends.pull(currentUser._id);
+
+        await Promise.all([ currentUser.save(), targetUser.save()]);
+
+        res.json({ message: ` ${currentUser.first_name} removed ${targetUser.first_name} as a friend` });
+
+    } catch (err) {
+        res.status(500).json({ error: "An error occurred while removing the friend" });
+    }
 };
 
 // Delete user

@@ -39,10 +39,17 @@ exports.get_user_and_friend_posts = async (req, res, next) => {
             path: 'comments',
             populate: {
               path: 'author',
+              select: 'first_name last_name profile_picture',
             },
           })
-        .populate("author")
-        .populate("likes")
+          .populate({
+            path: 'author',
+            select: 'first_name last_name profile_picture',
+        })
+        .populate({
+            path: 'likes',
+            select: 'first_name last_name',
+        })
         .lean();
         
         res.json(allPosts);
