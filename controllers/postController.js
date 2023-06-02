@@ -33,24 +33,32 @@ exports.get_user_and_friend_posts = async (req, res, next) => {
             return res.status(404).json({ error: "No user found"})
         }
         const friends = [req.params.id, ...user.friends.map(friend => friend._id)];
-        const allPosts = await Post.find({ author: { $in: friends } }).sort({ timestamp: -1 })
+        const allPosts = await Post.find({ author: { $in: friends } })
+        .sort({ timestamp: -1 })
         .limit(10)
         .populate({
-            path: 'comments',
-            populate: {
+          path: 'comments',
+          populate: [
+            {
               path: 'author',
               select: 'first_name last_name profile_picture',
             },
-          })
-          .populate({
-            path: 'author',
-            select: 'first_name last_name profile_picture',
+            {
+              path: 'likes',
+              select: 'first_name last_name',
+            }
+          ],
         })
         .populate({
-            path: 'likes',
-            select: 'first_name last_name',
+          path: 'author',
+          select: 'first_name last_name profile_picture',
+        })
+        .populate({
+          path: 'likes',
+          select: 'first_name last_name',
         })
         .lean();
+      
         
         res.json(allPosts);
     } catch (err) {
@@ -140,7 +148,8 @@ exports.delete_post = (req, res, next) => {
 // Like a post - COMPLETE
 exports.like_post = async (req, res, next) => {
     try {
-        const post = await Post.findById(req.params.postId);
+        const post = await Post.findById(req.params.postId)
+        .select("likes");
 
         if (!post) {
             return res.status(404).json({ error: 'Post not found' });

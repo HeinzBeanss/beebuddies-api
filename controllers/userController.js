@@ -66,30 +66,42 @@ exports.get_user = async (req, res, next) => {
         const user = await User.findById(req.params.id)
         .select("first_name last_name bio birthdate profile_picture banner friends posts date_created friend_requests_out friend_requests_in")
         .populate({
-            path: "friends",
-            select: "first_name last_name profile_picture"
+          path: "friends",
+          select: "first_name last_name profile_picture"
         })
         .populate({
           path: "posts",
           options: {
             limit: 15,
-            sort: { timestamp: -1 }, // Sort by timestamp in descending order
+            sort: { timestamp: -1 },
           },
           populate: [
             {
               path: "author",
               model: "User",
-              select: "first_name last_name profile_picture", // Select the desired fields from the author
+              select: "first_name last_name profile_picture",
             },
             {
               path: "comments",
               model: "Comment",
-              populate: {
-                path: "author",
-                model: "User",
-                select: "first_name last_name profile_picture", // Select the desired fields from the author of the comment
-              },
+              populate: [
+                {
+                  path: "author",
+                  model: "User",
+                  select: "first_name last_name profile_picture",
+                },
+                {
+                  path: "likes",
+                  model: "User",
+                  select: "first_name last_name",
+                }
+              ],
             },
+            {
+              path: "likes",
+              model: "User",
+              select: "first_name last_name",
+            }
           ],
         })
         .lean();
@@ -269,7 +281,10 @@ exports.get_friends = async (req, res,  next) => {
     try {
         const user = await User.findById(req.params.id)
         .select("friends")
-        .populate("friends")
+        .populate({
+            path: "friends",
+            select: "first_name last_name profile_picture bio"
+        })
         .lean();
 
         if (!user) {
