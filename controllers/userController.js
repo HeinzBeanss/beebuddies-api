@@ -43,6 +43,12 @@ const Comment = require("../models/comment");
 // Get all Users that aren't friends with he current user - COMPLETE
 exports.get_user_list_not_friends = async (req, res, next) => {
     try {
+        if (req.query.guestMode === 'true') {
+            const users = await User.find({})
+              .select("first_name last_name profile_picture bio")
+              .lean();
+            res.json(users);
+          } else {
         const currentUser = await User.findById(req.params.id)
         .populate("friends");
         const friendList = currentUser.friends.map(friend => friend._id);
@@ -55,6 +61,7 @@ exports.get_user_list_not_friends = async (req, res, next) => {
         .select("first_name last_name profile_picture friends friend_requests_in friend_requests_out _id")
         .lean();
         res.json(users);
+    }
     } catch (err) {
         res.status(500).json({ error: 'An error occurred' });
     }
@@ -118,7 +125,7 @@ exports.post_user = [
     body("first_name", "You must enter your first name").trim().notEmpty(),
     body("last_name", "You must enter your last name").trim().notEmpty(),
     body("email", "Invalid email address").trim().notEmpty().isEmail(),
-    body("password", "Must be 6 at least characters").trim().isLength({min: 6}),
+    body("password", "Password must be at least 6 characters long").trim().isLength({min: 6}),
     body("passwordtwo").custom((value, {req}) => {
         if (value !== req.body.password) {
             console.log(value);
@@ -277,24 +284,50 @@ exports.edit_user_banner = [
 ];
 
 // Get a list of friends - COMPLETE
-exports.get_friends = async (req, res,  next) => {
+exports.get_friends = async (req, res, next) => {
     try {
-        const user = await User.findById(req.params.id)
-        .select("friends")
+      const { guestMode } = req.query;
+      const { id } = req.params;
+      console.log(guestMode);
+      console.log(id);
+      let query = {};
+  
+      if (guestMode === 'true') {
+        console.log("it's true enough");
+        // If guestMode is true, retrieve the latest 10 users
+        query = {}; // Exclude the current user
+      } else {
+        query = { _id: id };
+      }
+  
+      const users = await User.find(query)
+        .sort({ date_created: -1 }) // Sort by date_created in descending order
+        .limit(guestMode === 'true' ? 10 : undefined)
+        .select('first_name last_name profile_picture bio')
+        .lean();
+  
+      if (guestMode === 'true') {
+        return res.json(users);
+      }
+  
+      const user = await User.findById(id)
+        .select('friends')
         .populate({
-            path: "friends",
-            select: "first_name last_name profile_picture bio"
+          path: 'friends',
+          select: 'first_name last_name profile_picture bio',
         })
         .lean();
-
-        if (!user) {
-            return res.status(404).json({ error: "No user found"})
-        } 
-        res.json(user.friends);
+  
+      if (!user) {
+        return res.status(404).json({ error: 'No user found' });
+      }
+  
+      res.json(user.friends);
     } catch (err) {
-        res.status(500).json({ error: "An error has occured" });
+      res.status(500).json({ error: 'An error has occurred' });
     }
-}
+  };
+  
 
 // Get a list of friend requests  - COMPLETE
 exports.get_friend_requests = async (req, res, next) => {

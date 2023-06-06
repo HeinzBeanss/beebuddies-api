@@ -24,47 +24,58 @@ const Comment = require("../models/comment");
 
 // Get all posts belonging to a specific user and their friends, aka their newsfeed - COMPLETE
 exports.get_user_and_friend_posts = async (req, res, next) => {
-    try {
-        const user = await User.findById(req.params.id)
-        .select("friends")
-        .populate("friends");
+  try {
+    let query = {};
+    
+    if (req.query.guestMode === 'true') {
+      // If guestMode is true, fetch all posts
+      query = {}; // Empty query to fetch all posts
+    } else {
+      // Fetch posts for the user and their friends
+      const user = await User.findById(req.params.id)
+        .select('friends')
+        .populate('friends');
 
-        if (!user) {
-            return res.status(404).json({ error: "No user found"})
-        }
-        const friends = [req.params.id, ...user.friends.map(friend => friend._id)];
-        const allPosts = await Post.find({ author: { $in: friends } })
-        .sort({ timestamp: -1 })
-        .limit(10)
-        .populate({
-          path: 'comments',
-          populate: [
-            {
-              path: 'author',
-              select: 'first_name last_name profile_picture',
-            },
-            {
-              path: 'likes',
-              select: 'first_name last_name',
-            }
-          ],
-        })
-        .populate({
-          path: 'author',
-          select: 'first_name last_name profile_picture',
-        })
-        .populate({
-          path: 'likes',
-          select: 'first_name last_name',
-        })
-        .lean();
-      
-        
-        res.json(allPosts);
-    } catch (err) {
-        res.status(500).json({error: "An error has occured"});
+      if (!user) {
+        return res.status(404).json({ error: 'No user found' });
+      }
+
+      const friends = [req.params.id, ...user.friends.map((friend) => friend._id)];
+      query = { author: { $in: friends } };
     }
+
+    const allPosts = await Post.find(query)
+      .sort({ timestamp: -1 })
+      .limit(10)
+      .populate({
+        path: 'comments',
+        populate: [
+          {
+            path: 'author',
+            select: 'first_name last_name profile_picture',
+          },
+          {
+            path: 'likes',
+            select: 'first_name last_name',
+          },
+        ],
+      })
+      .populate({
+        path: 'author',
+        select: 'first_name last_name profile_picture',
+      })
+      .populate({
+        path: 'likes',
+        select: 'first_name last_name',
+      })
+      .lean();
+
+    res.json(allPosts);
+  } catch (err) {
+    res.status(500).json({ error: 'An error has occurred' });
+  }
 };
+
 
 // Get all posts belonging to a specific user
 exports.get_user_posts = (req, res, next) => {
