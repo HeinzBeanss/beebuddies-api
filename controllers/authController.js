@@ -2,11 +2,13 @@ const { body, validationResult } = require("express-validator");
 const async = require("async");
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
+var cors = require('cors');
 
 // Models
 const User = require("../models/user");
 const Post = require("../models/post");
 const Comment = require("../models/comment");
+const user = require("../models/user");
 
 exports.login = (req, res, next) => {
     console.log("PASSPORT - LOCAL - LOGIN ROUTE")
@@ -31,21 +33,31 @@ exports.login = (req, res, next) => {
 };
 
 exports.login_facebook = (req, res, next) => {
+    console.log("login facebook stage 1");
     passport.authenticate('facebook')(req, res, next)
 };
 
-exports.login_facebook_callback = (req, res, next) => {
-    passport.authenticate('facebook', { failureRedirect: '/login' }),
-    function(req, res) {
-      const token = jwt.sign({ userId: req.user._id }, process.env.secretjwt);
-      res.redirect('/home?token=' + token);
-    }
-}
+exports.login_facebook_callback = [
+    cors(),
+    passport.authenticate('facebook', { session: false }),
+    (req, res) => {
+      // Authentication successful
+      const token = jwt.sign({ userId: req.user._id }, process.env.secretjwt, { expiresIn: "1h" });
+      const updatedUser = req.user.toObject();
+  
+      // Redirect with user and token as query parameters
+    //   const redirectUrl = `http://localhost:3001/login?user=${encodeURIComponent(JSON.stringify(updatedUser))}&token=${token}`;
+    //   res.redirect(redirectUrl);
+          // Set the token as a cookie
+          res.cookie('token', token);
 
+          // Redirect to the login page
+          res.redirect("http://localhost:3001/login");
+    }
+  ];
+
+  // DEPRECIATED = NOT USED.
 exports.logout = (req, res, next) => {
-    console.log("LOGGING USER OUT");
-    console.log(req.updatedUser);
-    // NOTE - fix auth to signout properly
     try {
         req.logout();
         return res.status(200).json({message: "User has been logged out"});

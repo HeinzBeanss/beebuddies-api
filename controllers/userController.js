@@ -458,8 +458,57 @@ exports.remove_friend = async (req, res, next) => {
 };
 
 // Delete user
-exports.delete_user = (req, res, next) => {
-    res.json({ message: "delete user"});
+exports.delete_user = async (req, res, next) => {
+  try {
+    const userId = req.params.id;
+
+    // Delete the user
+    const deletedUser = await User.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Remove the user from friends' lists
+    await User.updateMany(
+      { friends: userId },
+      { $pull: { friends: userId } }
+    );
+
+    // Remove the user from incoming friend requests
+    await User.updateMany(
+      { friend_requests_in: userId },
+      { $pull: { friend_requests_in: userId } }
+    );
+
+    // Remove the user from outgoing friend requests
+    await User.updateMany(
+      { friend_requests_out: userId },
+      { $pull: { friend_requests_out: userId } }
+    );
+
+    // Delete the posts created by the user
+    await Post.deleteMany({ author: userId });
+
+    // Delete the comments created by the user
+    await Comment.deleteMany({ author: userId });
+
+    // Remove the user from likes array of posts
+    await Post.updateMany(
+      { likes: userId },
+      { $pull: { likes: userId } }
+    );
+
+    // Remove the user from likes array of comments
+    await Comment.updateMany(
+      { likes: userId },
+      { $pull: { likes: userId } }
+    );
+
+    return res.status(200).json({ message: 'User deleted successfully' });
+  } catch (error) {
+    return res.status(500).json({ error: 'An error occurred while deleting the user' });
+  }
 };
 
 
