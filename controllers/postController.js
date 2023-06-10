@@ -26,7 +26,7 @@ const Comment = require("../models/comment");
 exports.get_user_and_friend_posts = async (req, res, next) => {
   try {
     let query = {};
-    
+
     if (req.query.guestMode === 'true') {
       // If guestMode is true, fetch all posts
       query = {}; // Empty query to fetch all posts
@@ -44,9 +44,18 @@ exports.get_user_and_friend_posts = async (req, res, next) => {
       query = { author: { $in: friends } };
     }
 
+    const { page = 1, limit = 10 } = req.query; // Default to page 1 and 10 posts per page
+
+    const options = {
+      sort: { timestamp: -1 },
+      skip: (page - 1) * limit,
+      limit: +limit, // Convert limit to a number
+    };
+
     const allPosts = await Post.find(query)
-      .sort({ timestamp: -1 })
-      .limit(10)
+      .sort(options.sort)
+      .skip(options.skip)
+      .limit(options.limit)
       .populate({
         path: 'comments',
         populate: [
@@ -152,8 +161,30 @@ async (req, res, next) => {
 ];
 
 // Delete a post
-exports.delete_post = (req, res, next) => {
-    res.json({message: "delete a post"});
+exports.delete_post = async (req, res, next) => {
+  try {
+    const postId = req.params.postId;
+    const userId = req.params.id;
+
+    // Find the post's comments and delete each comment individually
+    const post = await Post.findById(postId);
+    const commentIds = post.comments;
+
+    // Delete each comment individually
+    for (const commentId of commentIds) {
+      await Comment.findByIdAndDelete(commentId);
+    }
+
+    // Delete the post from the Post model
+    await Post.findByIdAndDelete(postId);
+
+    // Remove the post reference from the author's posts array
+    await User.findByIdAndUpdate(userId, { $pull: { posts: postId } });
+
+    res.json({ message: 'Post deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred while deleting the post' });
+  }
 };
 
 // Like a post - COMPLETE

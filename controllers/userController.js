@@ -69,56 +69,60 @@ exports.get_user_list_not_friends = async (req, res, next) => {
 
 // Get specific User
 exports.get_user = async (req, res, next) => {
-    try {   
-        const user = await User.findById(req.params.id)
-        .select("first_name last_name bio birthdate profile_picture banner friends posts date_created friend_requests_out friend_requests_in")
-        .populate({
-          path: "friends",
-          select: "first_name last_name profile_picture"
-        })
-        .populate({
-          path: "posts",
-          options: {
-            limit: 15,
-            sort: { timestamp: -1 },
+  try {
+    const { page = 1, limit = 10 } = req.query; // Default to page 1 and 10 posts per page
+
+    const user = await User.findById(req.params.id)
+      .select("first_name last_name bio birthdate profile_picture banner friends posts date_created friend_requests_out friend_requests_in")
+      .populate({
+        path: "friends",
+        select: "first_name last_name profile_picture"
+      })
+      .populate({
+        path: "posts",
+        options: {
+          sort: { timestamp: -1 },
+          skip: (page - 1) * limit,
+          limit: +limit, // Convert limit to a number
+        },
+        populate: [
+          {
+            path: "author",
+            model: "User",
+            select: "first_name last_name profile_picture",
           },
-          populate: [
-            {
-              path: "author",
-              model: "User",
-              select: "first_name last_name profile_picture",
-            },
-            {
-              path: "comments",
-              model: "Comment",
-              populate: [
-                {
-                  path: "author",
-                  model: "User",
-                  select: "first_name last_name profile_picture",
-                },
-                {
-                  path: "likes",
-                  model: "User",
-                  select: "first_name last_name",
-                }
-              ],
-            },
-            {
-              path: "likes",
-              model: "User",
-              select: "first_name last_name",
-            }
-          ],
-        })
-        .lean();
-      
-        // Note - Maybe populate fields.
-        res.json(user)
-    } catch (err) {
-        res.status(500).json({ error: "An error has occured" });
-    }
+          {
+            path: "comments",
+            model: "Comment",
+            populate: [
+              {
+                path: "author",
+                model: "User",
+                select: "first_name last_name profile_picture",
+              },
+              {
+                path: "likes",
+                model: "User",
+                select: "first_name last_name",
+              }
+            ],
+          },
+          {
+            path: "likes",
+            model: "User",
+            select: "first_name last_name",
+          }
+        ],
+      })
+      .lean();
+
+    // Note - Maybe populate fields.
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: "An error has occurred" });
+  }
 };
+
 
 // Create new user - COMPLETE
 exports.post_user = [
