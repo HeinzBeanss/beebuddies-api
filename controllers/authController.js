@@ -52,7 +52,7 @@ exports.login_facebook_callback = [
           res.cookie('token', token);
 
           // Redirect to the login page
-          res.redirect("http://localhost:3000/login");
+          res.redirect("https://heinzbeanss.github.io/beebuddies/login");
     }
   ];
 

@@ -62,7 +62,7 @@ passport.use(
     {
       clientID: process.env.fbappid,
       clientSecret: process.env.fbsecret,
-      callbackURL: "http://localhost:4000/auth/login-facebook/callback",
+      callbackURL: "https://beebook-api-production.up.railway.app/auth/login-facebook/callback",
       profileFields: ['id', 'emails', 'name', 'picture.type(large)', 'birthday'],
     },
     async function(accessToken, refreshToken, profile, done) {
