@@ -41,19 +41,18 @@ exports.login_facebook_callback = [
     cors(),
     passport.authenticate('facebook', { session: false }),
     (req, res) => {
-      // Authentication successful
-      const token = jwt.sign({ userId: req.user._id }, process.env.secretjwt, { expiresIn: "1h" });
-      const updatedUser = req.user.toObject();
-  
-      // Redirect with user and token as query parameters
-    //   const redirectUrl = `http://localhost:3001/login?user=${encodeURIComponent(JSON.stringify(updatedUser))}&token=${token}`;
-    //   res.redirect(redirectUrl);
-          // Set the token as a cookie
-          res.cookie('token', token);
-            console.log(token);
-            console.log("it makes it here, redirecting");
-          // Redirect to the login page
-          res.redirect("https://heinzbeanss.github.io/beebuddies/#/login");
+    // Authentication successful
+    const token = jwt.sign({ userId: req.user._id }, process.env.secretjwt, { expiresIn: "1h" });
+    const updatedUser = req.user.toObject();
+
+    res.cookie('token', token, {
+        sameSite: 'None',
+        secure: true, // This requires the request to be made over HTTPS
+      });
+    console.log(token);
+    console.log("it makes it here, redirecting");
+    // Redirect to the login page
+    res.redirect("https://heinzbeanss.github.io/beebuddies/#/login");
     }
   ];
 
