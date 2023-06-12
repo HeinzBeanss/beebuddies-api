@@ -56,6 +56,9 @@ passport.deserializeUser(async function(id, done) {
   };
 });
 
+console.log("BELOW THIS");
+console.log(process.env.fbappid);
+console.log(process.env.fbsecret);
 // Passport Facebook Strategy
 passport.use(
   new FacebookStrategy(
