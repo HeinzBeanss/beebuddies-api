@@ -46,9 +46,11 @@ exports.login_facebook_callback = [
     const updatedUser = req.user.toObject();
 
     res.cookie('token', token, {
-        sameSite: 'None',
-        secure: true, // This requires the request to be made over HTTPS
+        sameSite: 'none',
+        secure: true,
+        domain: '.heinzbeanss.github.io',
       });
+      
     console.log(token);
     console.log("it makes it here, redirecting");
     // Redirect to the login page
