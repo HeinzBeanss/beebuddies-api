@@ -53,8 +53,13 @@ exports.login_facebook_callback = [
       
     console.log(token);
     console.log("it makes it here, redirecting");
+
+    const encodedToken = encodeURIComponent(token);
+
+    // Build the redirect URL with the encoded token as a parameter
+    const redirectUrl = `https://heinzbeanss.github.io/beebuddies/#/login?token=${encodedToken}`;
     // Redirect to the login page
-    res.redirect("https://heinzbeanss.github.io/beebuddies/#/login");
+    res.redirect(redirectUrl);
     }
   ];
 
