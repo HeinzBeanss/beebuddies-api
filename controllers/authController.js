@@ -48,7 +48,7 @@ exports.login_facebook_callback = [
     res.cookie('token', token, {
         sameSite: 'none',
         secure: true,
-        domain: 'heinzbeanss.github.io',
+        domain: '.github.io',
       });
       
     console.log(token);
