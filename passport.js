@@ -60,8 +60,8 @@ passport.deserializeUser(async function(id, done) {
 passport.use(
   new FacebookStrategy(
     {
-      clientID: "1923853964664020",
-      clientSecret: "0872c753e1cf2585307123f132488200",
+      clientID: process.env.fbappid,
+      clientSecret: process.env.fbsecret,
       callbackURL: "https://beebuddies.up.railway.app/auth/login-facebook/callback",
       profileFields: ['id', 'emails', 'name', 'picture.type(large)', 'birthday'],
     },
