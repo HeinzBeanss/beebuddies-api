@@ -42,7 +42,17 @@ app.use(compression()); // Compress all routes
 app.use(helmet());
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: true, // Allow requests from any origin
+  credentials: true, // Enable sending cookies with requests
+}));
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true'); // Allow credentials
+  next();
+});
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
