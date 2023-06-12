@@ -61,8 +61,8 @@ passport.use(
   new FacebookStrategy(
     {
       clientID: process.env.fbappid,
-      clientSecret: process.env.fbsecret,
-      callbackURL: "https://beebuddies.up.railway.app/auth/login-facebook/callback",
+      clientSecret: "1923853964664020",
+      callbackURL: "0872c753e1cf2585307123f132488200",
       profileFields: ['id', 'emails', 'name', 'picture.type(large)', 'birthday'],
     },
     async function(accessToken, refreshToken, profile, done) {
