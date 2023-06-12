@@ -50,7 +50,8 @@ exports.login_facebook_callback = [
     //   res.redirect(redirectUrl);
           // Set the token as a cookie
           res.cookie('token', token);
-
+            console.log(token);
+            console.log("it makes it here, redirecting");
           // Redirect to the login page
           res.redirect("https://heinzbeanss.github.io/beebuddies/#/login");
     }
