@@ -20,11 +20,11 @@ const Post = require("./models/post");
 const Comment = require("./models/comment");
 
 // Database Setup
-const mongodb = process.env.MONGODB_URI || process.env.mongodb;
-mongoose.connect(mongodb, { 
-    useUnifiedTopology: true, 
-    useNewUrlParser: true 
-  });
+const mongodb = process.env.MONGODB_URL || process.env.mongodb;
+mongoose.connect(mongodb, {
+  useUnifiedTopology: true,
+  useNewUrlParser: true
+});
 
 // Routes
 const apiRouter = require("./routes/api");
@@ -34,8 +34,8 @@ const authRouter = require("./routes/auth");
 const app = express();
 
 const limiter = RateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute
-    max: 40,
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 40,
 });
 app.use(limiter);
 app.use(compression()); // Compress all routes
@@ -63,16 +63,16 @@ app.use("/api", apiRouter);
 app.use("/auth", authRouter);
 
 app.get("/", (req, res, next) => {
-    res.redirect("/api");
+  res.redirect("/api");
 });
 
 // Catch 404 and forward to error handler
-app.use(function(req, res, next) {
-    next(createError(404));
+app.use(function (req, res, next) {
+  next(createError(404));
 });
-  
+
 // Error Handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // Set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
@@ -81,6 +81,6 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
-  
+
 // Listen on Port specified or fall back to 3000
 app.listen(process.env.PORT || '4000');
