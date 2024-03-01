@@ -20,7 +20,7 @@ const Post = require("./models/post");
 const Comment = require("./models/comment");
 
 // Database Setup
-const mongodb = process.env.MONGODB_URL || process.env.mongodb;
+const mongodb = process.env.MONGO_URL || process.env.mongodb;
 mongoose.connect(mongodb, {
   useUnifiedTopology: true,
   useNewUrlParser: true
